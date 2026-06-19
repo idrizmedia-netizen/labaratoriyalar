@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Gravity Illusion</title>
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
+
+    body{
+        overflow:hidden;
+        background:#000;
+    }
+
+    canvas{
+        display:block;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const mouse = {
+    x: canvas.width/2,
+    y: canvas.height/2
+};
+
+window.addEventListener("mousemove",(e)=>{
+    mouse.x=e.clientX;
+    mouse.y=e.clientY;
+});
+
+window.addEventListener("resize",()=>{
+    canvas.width=innerWidth;
+    canvas.height=innerHeight;
+});
+
+class Particle{
+    constructor(){
+        this.reset();
+    }
+
+    reset(){
+        this.x=Math.random()*canvas.width;
+        this.y=Math.random()*canvas.height;
+
+        this.vx=(Math.random()-0.5)*2;
+        this.vy=(Math.random()-0.5)*2;
+
+        this.size=Math.random()*2+1;
+        this.life=100+Math.random()*200;
+
+        this.hue=Math.random()*360;
+    }
+
+    update(){
+        const dx=mouse.x-this.x;
+        const dy=mouse.y-this.y;
+
+        const dist=Math.sqrt(dx*dx+dy*dy)+0.1;
+
+        const force=3000/(dist*dist);
+
+        this.vx += (dx/dist)*force*0.02;
+        this.vy += (dy/dist)*force*0.02;
+
+        this.vx*=0.985;
+        this.vy*=0.985;
+
+        this.x+=this.vx;
+        this.y+=this.vy;
+
+        this.life--;
+
+        if(
+            this.x<0 ||
+            this.x>canvas.width ||
+            this.y<0 ||
+            this.y>canvas.height ||
+            this.life<0
+        ){
+            this.reset();
+        }
+    }
+
+    draw(){
+        ctx.beginPath();
+        ctx.fillStyle=`hsla(${this.hue},100%,60%,0.8)`;
+        ctx.shadowBlur=20;
+        ctx.shadowColor=`hsl(${this.hue},100%,60%)`;
+        ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+        ctx.fill();
+    }
+}
+
+const particles=[];
+
+for(let i=0;i<2500;i++){
+    particles.push(new Particle());
+}
+
+function connect(){
+    for(let i=0;i<particles.length;i+=4){
+        for(let j=i+1;j<particles.length;j+=12){
+
+            const dx=particles[i].x-particles[j].x;
+            const dy=particles[i].y-particles[j].y;
+
+            const dist=dx*dx+dy*dy;
+
+            if(dist<4000){
+                ctx.beginPath();
+                ctx.strokeStyle=`rgba(255,255,255,${
+                    0.15-(dist/4000)*0.15
+                })`;
+                ctx.lineWidth=0.4;
+                ctx.moveTo(
+                    particles[i].x,
+                    particles[i].y
+                );
+                ctx.lineTo(
+                    particles[j].x,
+                    particles[j].y
+                );
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function animate(){
+
+    ctx.fillStyle="rgba(0,0,0,0.08)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    particles.forEach(p=>{
+        p.update();
+        p.draw();
+    });
+
+    connect();
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>
